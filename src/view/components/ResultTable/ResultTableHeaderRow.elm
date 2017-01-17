@@ -1,4 +1,4 @@
-module ResultTableHeaderRow exposing (configure)
+module ResultTableHeaderRow exposing (render)
 
 import Html exposing (Html, text, th, tr)
 import Html.Events exposing (onClick)
@@ -8,6 +8,6 @@ import ResultTableHeaderCellModel exposing (ResultTableHeaderCellModel)
 renderSingleCell: ResultTableHeaderCellModel a -> Html a
 renderSingleCell model = th[onClick model.message][text model.value]
 
-configure: List (ResultTableHeaderCellModel a)   -> Html a
-configure headerContentList =
+render: List (ResultTableHeaderCellModel a)   -> Html a
+render headerContentList =
     tr [] (List.map renderSingleCell headerContentList)

@@ -1,13 +1,16 @@
-module Translation exposing (Translation)
+module Translation exposing (Translation, TranslationId)
 
 import TranslationType exposing (TranslationType)
 import Date exposing (Date)
 
+
+type alias TranslationId = Float
 type alias Translation =
     {
-         originText: String
+         id: Maybe TranslationId
+        ,originText: String
         ,translationText: String
         ,translationType: TranslationType
-        ,creationDate: Date
-        ,editDate: Date
+        ,creationDate: Maybe Date
+        ,editDate: Maybe Date
     }

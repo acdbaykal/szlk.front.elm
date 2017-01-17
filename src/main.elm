@@ -17,25 +17,29 @@ translations: List Translation
 translations =
         [
             {
+
+                id = Just 8271989,
                 translationType = TranslationType.NOUN_MASK,
                 originText = "höflich",
                 translationText = "nazik",
-                creationDate = Date.fromTime 0,
-                editDate = Date.fromTime 0
+                creationDate = Just (Date.fromTime 60000),
+                editDate = Just (Date.fromTime 0)
             },
             {
+                id = Just 7686860,
                 translationType = TranslationType.NOUN_MASK,
                 originText = "löwe",
                 translationText = "aslan",
-                creationDate = Date.fromTime 0,
-                editDate = Date.fromTime 0
+                creationDate = Just (Date.fromTime 0),
+                editDate = Just (Date.fromTime 60000)
             }
 
         ]
 
 model: SzlkModel
 model = {
-             searchInputValue = ""
+             loggedIn = (Just {passWord = "pass"})
+            ,searchInputValue = ""
             ,sortBy = OriginText
             ,sortDirection = Ascending
             ,translations = translations

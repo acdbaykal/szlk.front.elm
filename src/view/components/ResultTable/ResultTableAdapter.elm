@@ -2,6 +2,7 @@ module ResultTableAdapter exposing (render)
 
 import Html exposing (Html)
 import Date exposing (Date)
+import Date.Format
 import List
 import Maybe exposing (Maybe)
 import SzlkMsg exposing (SzlkMsg(SortBy))
@@ -14,9 +15,25 @@ import ResultTable
 import ResultTableHeaderCellModel exposing (ResultTableHeaderCellModel)
 import ResultTableHeaderRow
 import ResultTableRow
+import ResultAdminTableRow
 
-sortByDate: Date -> Date -> Order
-sortByDate a b = compare (Date.toTime a) (Date.toTime b)
+formatDate: Maybe Date -> String
+formatDate date =
+    case date of
+        Just d -> Date.Format.format "%d.%m.%Y / %H:%M" d
+        Nothing -> ""
+
+sortByDate: Maybe Date -> Maybe Date -> Order
+sortByDate a b =
+    case a of
+        Just dateA ->
+            case b of
+                Just dateB -> compare (Date.toTime dateA) (Date.toTime dateB)
+                Nothing -> LT
+        Nothing ->
+            case b of
+                    Just dateB -> GT
+                    Nothing -> EQ
 
 sortByCreationDate: Translation -> Translation -> Order
 sortByCreationDate a b = sortByDate a.creationDate b.creationDate
@@ -72,13 +89,34 @@ headerData =
 
     ]
 
+adminHeaderData =
+    List.concat
+        [
+            headerData
+            ,[
+                 {message = SortBy CreationDate, value = "Creation date"}
+                ,{message = SortBy EditDate, value = "Editing date"}
+            ]
+        ]
+
+
 renderHeader: Html SzlkMsg
-renderHeader = ResultTableHeaderRow.configure headerData
+renderHeader = ResultTableHeaderRow.render headerData
+
+renderAdminHeader: Html SzlkMsg
+renderAdminHeader = ResultTableHeaderRow.render adminHeaderData
 
 renderRow: Translation -> Html SzlkMsg
 renderRow = ResultTableRow.configure labelType
 
+renderAdminRow: Translation -> Html SzlkMsg
+renderAdminRow = ResultAdminTableRow.configure labelType formatDate SzlkMsg.DeleteRequest
+
 renderDefaultTable = ResultTable.configure renderHeader renderRow
+renderAdminTable = ResultTable.configure renderAdminHeader renderAdminRow
 
 render: SzlkModel -> Html SzlkMsg
-render model = renderDefaultTable (adaptModel model)
+render model =
+    case model.loggedIn of
+        Nothing  -> renderDefaultTable (adaptModel model)
+        Just account -> renderAdminTable (adaptModel model)
