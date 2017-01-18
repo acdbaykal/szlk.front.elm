@@ -1,5 +1,6 @@
 import Html exposing (Html)
-import Html.App as App
+--import Html.App as App
+import TimeTravel.Html.App as App
 import Date exposing (Date)
 --model related
 import SzlkModel exposing (SzlkModel)
@@ -38,7 +39,10 @@ translations =
 
 model: SzlkModel
 model = {
-             loggedIn = (Just {passWord = "pass"})
+             addTranslationTranslationText = ""
+            ,addTranslationOriginText = ""
+            ,addTranslationType = Nothing
+            ,loggedIn = (Just {passWord = "pass"})
             ,searchInputValue = ""
             ,sortBy = OriginText
             ,sortDirection = Ascending

@@ -5,17 +5,22 @@
     "license": "BSD3",
     "source-directories": [
         "src",
+        "src/generic",
         "src/types",
         "src/update",
         "src/view",
         "src/view/components",
+        "src/view/components/AddTranslationArea",
         "src/view/components/ResultTable",
         "src/view/components/SearchArea"
     ],
     "exposed-modules": [],
+    "native-modules": true,
     "dependencies": {
+        "elm-community/html-extra": "2.0.0 <= v < 3.0.0",
         "elm-lang/core": "4.0.5 <= v < 5.0.0",
         "elm-lang/html": "1.1.0 <= v < 2.0.0",
+        "jinjor/elm-time-travel": "1.0.17 <= v < 2.0.0",
         "mgold/elm-date-format": "1.1.6 <= v < 2.0.0"
     },
     "elm-version": "0.17.1 <= v < 0.18.0"
