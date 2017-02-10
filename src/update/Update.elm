@@ -112,4 +112,6 @@ update msg model =
                         }
                 ,Cmd.none
             )
+        UpdateTranslationAttempt parameter ->
+            ({model | updateAttempt = Just parameter}, Cmd.none)
         _ -> (model, Cmd.none)

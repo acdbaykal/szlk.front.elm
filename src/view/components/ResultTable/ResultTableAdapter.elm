@@ -5,17 +5,19 @@ import Date exposing (Date)
 import Date.Format
 import List
 import Maybe exposing (Maybe)
-import SzlkMsg exposing (SzlkMsg(SortBy))
+import SzlkMsg exposing (SzlkMsg(SortBy, UpdateTranslationAttempt, UpdateTranslationType))
 import SzlkModel exposing (SzlkModel)
 import Translation exposing (Translation)
 import TranslationProperty exposing (TranslationProperty(..))
 import TranslationType exposing (TranslationType(..))
+import UpdateTranslationParameter exposing (UpdateTranslationParameter, UpdateTranslationAttemptParameter)
 import SortDirection exposing (SortDirection)
 import ResultTable
 import ResultTableHeaderCellModel exposing (ResultTableHeaderCellModel)
 import ResultTableHeaderRow
 import ResultTableRow
 import ResultAdminTableRow
+import TranslationTypeSelectionBox
 
 formatDate: Maybe Date -> String
 formatDate date =
@@ -68,6 +70,16 @@ sortTranslations translations model =
 adaptModel: SzlkModel -> List Translation
 adaptModel model = sortTranslations model.translations model
 
+
+typeBoxContent = [
+                (NOUN_MASK, "Noun (mask.)")
+               ,(NOUN_FEM, "Noun (fem.)")
+               ,(NOUN_NEUT, "Noun (neut.)")
+               ,(SAYING, "Saying")
+               ,(DIRECTIVE, "Directive")
+               ,(VERB, "Verb")
+    ]
+
 labelType: Translation -> String
 labelType translation =
     let
@@ -100,23 +112,63 @@ adminHeaderData =
         ]
 
 
-renderHeader: Html SzlkMsg
-renderHeader = ResultTableHeaderRow.render headerData
+defaultHeaderRow: Html SzlkMsg
+defaultHeaderRow = ResultTableHeaderRow.render headerData
 
-renderAdminHeader: Html SzlkMsg
-renderAdminHeader = ResultTableHeaderRow.render adminHeaderData
+adminHeaderRow: Html SzlkMsg
+adminHeaderRow = ResultTableHeaderRow.render adminHeaderData
 
 renderRow: Translation -> Html SzlkMsg
 renderRow = ResultTableRow.configure labelType
 
-renderAdminRow: Translation -> Html SzlkMsg
-renderAdminRow = ResultAdminTableRow.configure labelType formatDate SzlkMsg.DeleteRequest
+updateTranslationPropertyAttempt: TranslationProperty -> Translation -> SzlkMsg
+updateTranslationPropertyAttempt property =
+    \translation -> (UpdateTranslationAttempt
+        {
+            translation = translation,
+            property = property
+        })
+updateOriginTextAttempt = updateTranslationPropertyAttempt OriginText
+updateTranslationTextAttempt = updateTranslationPropertyAttempt TranslationText
 
-renderDefaultTable = ResultTable.configure renderHeader renderRow
-renderAdminTable = ResultTable.configure renderAdminHeader renderAdminRow
+adaptOnTranslationTypeChangeMsg : Translation -> TranslationTypeSelectionBox.OnChangeMsg SzlkMsg
+adaptOnTranslationTypeChangeMsg translation =
+        \maybeTranslationType ->
+            UpdateTranslationType {
+                translation = translation,
+                property = Type,
+                value = maybeTranslationType
+        }
+
+renderTypeSelectBox : TranslationTypeSelectionBox.OptionsData ->ResultAdminTableRow.RenderTypeSelectBoxFunction SzlkMsg
+renderTypeSelectBox typeBoxContent translation =
+    let
+        onChangeMsg = (adaptOnTranslationTypeChangeMsg translation)
+    in
+        TranslationTypeSelectionBox.render onChangeMsg typeBoxContent
+
+
+renderAdminRow: ResultAdminTableRow.RenderTypeSelectBoxFunction SzlkMsg ->
+                Translation -> Html SzlkMsg
+renderAdminRow = ResultAdminTableRow.configure
+                    formatDate
+                    SzlkMsg.DeleteRequest
+                    updateOriginTextAttempt
+                    updateTranslationTextAttempt
+
+renderDefaultTable = ResultTable.render defaultHeaderRow renderRow
+renderAdminTable: SzlkModel ->
+                  ResultAdminTableRow.RenderTypeSelectBoxFunction SzlkMsg->
+                  Html SzlkMsg
+renderAdminTable model renderTypeSelectBox =
+        ResultTable.render
+            adminHeaderRow
+            (renderAdminRow renderTypeSelectBox)
+            (adaptModel model)
+
 
 render: SzlkModel -> Html SzlkMsg
 render model =
     case model.loggedIn of
         Nothing  -> renderDefaultTable (adaptModel model)
-        Just account -> renderAdminTable (adaptModel model)
+        Just account -> renderAdminTable model (renderTypeSelectBox typeBoxContent)

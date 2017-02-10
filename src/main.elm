@@ -47,6 +47,7 @@ model = {
             ,sortBy = OriginText
             ,sortDirection = Ascending
             ,translations = translations
+            ,updateAttempt = Nothing
         }
 
 update: SzlkMsg -> SzlkModel -> ( SzlkModel, Cmd SzlkMsg )

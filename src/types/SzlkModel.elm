@@ -4,6 +4,7 @@ module SzlkModel exposing (SzlkModel)
 import Translation exposing (Translation)
 import TranslationProperty exposing (TranslationProperty)
 import TranslationType exposing (TranslationType)
+import UpdateTranslationParameter exposing (UpdateTranslationAttemptParameter)
 import SortDirection exposing (SortDirection)
 import Account exposing (Account)
 
@@ -18,4 +19,5 @@ type alias SzlkModel =
         ,sortBy: TranslationProperty
         ,sortDirection: SortDirection
         ,translations: List Translation
+        ,updateAttempt: Maybe UpdateTranslationAttemptParameter
     }
