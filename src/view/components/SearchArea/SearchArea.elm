@@ -17,5 +17,4 @@ configure onInputChange onSearchRequest =
                       [
                           input[placeholder "Search term", onInput onInputChange, value model.searchInputValue][]
                           , button[onClick onSearchRequest][text "Search"]
-                          , p[][text model.searchInputValue]
                       ]

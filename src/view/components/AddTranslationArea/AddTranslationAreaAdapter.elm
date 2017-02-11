@@ -5,6 +5,7 @@ import SzlkMsg exposing (SzlkMsg(..))
 import SzlkModel exposing (SzlkModel)
 import TranslationType exposing (TranslationType(..))
 import AddTranslationArea exposing (configure)
+import TranslationTypeSelectionBox
 
 dropBoxContent:List (TranslationType, String)
 dropBoxContent =
@@ -17,10 +18,16 @@ dropBoxContent =
         ,(VERB, "Verb")
     ]
 
+onChangeMsg : TranslationTypeSelectionBox.OnChangeMsg SzlkMsg
+onChangeMsg ttype = AddRequestTranslationType ttype
+
+renderTranslationTypeBox: Html SzlkMsg
+renderTranslationTypeBox = TranslationTypeSelectionBox.render
+                                onChangeMsg dropBoxContent Nothing
+
 render: SzlkModel -> Html SzlkMsg
 render model = configure  AddRequest
                     AddRequestOriginText
                     AddRequestTranslationText
-                    AddRequestTranslationType
-                    dropBoxContent
+                    renderTranslationTypeBox
                     model

@@ -1,6 +1,6 @@
 import Html exposing (Html)
 --import Html.App as App
-import TimeTravel.Html.App as App
+import TimeTravel.Html as TimeTravel
 import Date exposing (Date)
 --model related
 import SzlkModel exposing (SzlkModel)
@@ -42,6 +42,7 @@ model = {
              addTranslationTranslationText = ""
             ,addTranslationOriginText = ""
             ,addTranslationType = Nothing
+            ,focusId = "dknjasdflnjaswlkaswlasdfklasnkdeslfgnslgnkaslernlgnl983472913423l2klkl"
             ,loggedIn = (Just {passWord = "pass"})
             ,searchInputValue = ""
             ,sortBy = OriginText
@@ -64,4 +65,4 @@ subscriptions model =
   Sub.none
 
 main =
-  App.program { init = init, view = view, update = update, subscriptions = subscriptions }
+  TimeTravel.program { init = init, view = view, update = update, subscriptions = subscriptions }

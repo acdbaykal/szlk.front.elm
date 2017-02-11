@@ -5,7 +5,7 @@ import Date exposing (Date)
 import Date.Format
 import List
 import Maybe exposing (Maybe)
-import SzlkMsg exposing (SzlkMsg(SortBy, UpdateTranslationAttempt, UpdateTranslationType))
+import SzlkMsg exposing (SzlkMsg(..))
 import SzlkModel exposing (SzlkModel)
 import Translation exposing (Translation)
 import TranslationProperty exposing (TranslationProperty(..))
@@ -71,7 +71,7 @@ adaptModel: SzlkModel -> List Translation
 adaptModel model = sortTranslations model.translations model
 
 
-typeBoxContent = [
+typeBoxContent = [ --TODO: eventually move this to the model, when ready to implement i18n features
                 (NOUN_MASK, "Noun (mask.)")
                ,(NOUN_FEM, "Noun (fem.)")
                ,(NOUN_NEUT, "Noun (neut.)")
@@ -145,16 +145,54 @@ renderTypeSelectBox typeBoxContent translation =
     let
         onChangeMsg = (adaptOnTranslationTypeChangeMsg translation)
     in
-        TranslationTypeSelectionBox.render onChangeMsg typeBoxContent
+        TranslationTypeSelectionBox.render onChangeMsg typeBoxContent (Just translation.translationType)
 
 
-renderAdminRow: ResultAdminTableRow.RenderTypeSelectBoxFunction SzlkMsg ->
-                Translation -> Html SzlkMsg
-renderAdminRow = ResultAdminTableRow.configure
+extractEditedProperty: SzlkModel -> Translation -> Maybe TranslationProperty
+extractEditedProperty model translation =
+    let
+        updateAttemptData = model.updateAttempt
+    in
+        case updateAttemptData of
+            Nothing -> Nothing
+            Just data ->
+                let
+                    editedTranslation = data.translation
+                    editedProperty = data.property
+                in
+                    if editedTranslation == translation then Just editedProperty else Nothing
+
+createUpdateOriginText: Translation -> (String -> SzlkMsg)
+createUpdateOriginText translation newOriginText =
+    UpdateTranslationOriginText {
+                                    translation = translation,
+                                    property = OriginText,
+                                    value = newOriginText
+                                }
+
+createUpdateTranslationText: Translation -> (String -> SzlkMsg)
+createUpdateTranslationText translation translationText =
+    UpdateTranslationTranslationText
+        {
+            translation = translation
+        ,   property = TranslationText
+        ,   value = translationText
+        }
+
+renderAdminRow: String -> ResultAdminTableRow.RenderTypeSelectBoxFunction SzlkMsg ->
+                (Translation -> Maybe TranslationProperty) -> Translation -> Html SzlkMsg
+renderAdminRow focusId renderFunc getEditedProp translation =
+        ResultAdminTableRow.render
                     formatDate
+                    focusId
                     SzlkMsg.DeleteRequest
                     updateOriginTextAttempt
                     updateTranslationTextAttempt
+                    (createUpdateOriginText translation)
+                    (createUpdateTranslationText translation)
+                    renderFunc
+                    translation
+                    (getEditedProp translation)
 
 renderDefaultTable = ResultTable.render defaultHeaderRow renderRow
 renderAdminTable: SzlkModel ->
@@ -163,7 +201,7 @@ renderAdminTable: SzlkModel ->
 renderAdminTable model renderTypeSelectBox =
         ResultTable.render
             adminHeaderRow
-            (renderAdminRow renderTypeSelectBox)
+            (renderAdminRow model.focusId renderTypeSelectBox (extractEditedProperty model))
             (adaptModel model)
 
 

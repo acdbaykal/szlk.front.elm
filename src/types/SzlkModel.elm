@@ -14,6 +14,7 @@ type alias SzlkModel =
          addTranslationTranslationText: String
         ,addTranslationOriginText: String
         ,addTranslationType:Maybe TranslationType
+        ,focusId:String
         ,loggedIn: (Maybe Account)
         ,searchInputValue: String
         ,sortBy: TranslationProperty
