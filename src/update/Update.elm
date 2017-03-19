@@ -166,42 +166,31 @@ update msg model =
                updatedTranslation = {oldTranslation | originText = parameter.value}
                command = ServerConnection.updateTranslation model.host updatedTranslation
            in
-            (
-                {model | translations = TranslationSet.insert updatedTranslation model.translations
---                ,   updateAttempt = --keep reference to translation, which is being edited in sync
---                        (
---                            case model.updateAttempt of
---                                Nothing -> Nothing
---                                Just attemptData ->
---                                    if parameter.translation == attemptData.translation
---                                    then Just {attemptData | translation = updatedTranslation}
---                                    else model.updateAttempt
---                        )
-                ,   updateAttempt = Nothing
-                }
-                ,command
-            )
+           case model.updateAttempt of
+              Nothing -> (model, Cmd.none)
+              Just _ ->
+                (
+                    {model | translations = TranslationSet.insert updatedTranslation model.translations
+                    ,   updateAttempt = Nothing
+                    }
+                    ,command
+                )
         UpdateTranslationTranslationText parameter ->
             let
                 oldTranslation = parameter.translation
                 updatedTranslation = {oldTranslation | translationText = parameter.value}
                 command = ServerConnection.updateTranslation model.host updatedTranslation
             in
-            (
-                {model | translations = TranslationSet.insert updatedTranslation model.translations
---                ,   updateAttempt = --keep reference to translation, which is beeing edited in sync
---                        (
---                            case model.updateAttempt of
---                                Nothing -> Nothing
---                                Just attemptData ->
---                                    if parameter.translation == attemptData.translation
---                                    then Just {attemptData | translation = updatedTranslation}
---                                    else model.updateAttempt
---                        )
-                ,   updateAttempt = Nothing
-                }
-                ,command
-            )
+            case model.updateAttempt of
+               Nothing -> (model, Cmd.none)
+               Just _ ->
+                (
+
+                    {model | translations = TranslationSet.insert updatedTranslation model.translations
+                    ,   updateAttempt = Nothing
+                    }
+                    ,command
+                )
         UpdateTranslationType parameter ->
             let
                 oldTranslation = parameter.translation
@@ -210,23 +199,26 @@ update msg model =
             case valueMaybe of
                 Nothing -> (model, Cmd.none)
                 Just value ->
-                    let
-                        updatedTranslation = {oldTranslation | translationType = value}
-                        command = ServerConnection.updateTranslation model.host updatedTranslation
-                    in
-                    (
-                        {model | translations = (
-                            TranslationSet.map (\t ->
-                                if t.id == updatedTranslation.id
-                                then updatedTranslation
-                                else t
-                            ) model.translations
-                        )}
-                        , command
-                    )
-        UpdateRequest translation ->
+                    case model.updateAttempt of
+                        Nothing -> (model, Cmd.none)
+                        Just _ ->
+                            let
+                                updatedTranslation = {oldTranslation | translationType = value}
+                                command = ServerConnection.updateTranslation model.host updatedTranslation
+                            in
+                            (
+                                {model | translations = (
+                                    TranslationSet.map (\t ->
+                                        if t.id == updatedTranslation.id
+                                        then updatedTranslation
+                                        else t
+                                    ) model.translations
+                                )}
+                                , command
+                            )
+        UpdateCancel translation ->
             (
-                model,  ServerConnection.updateTranslation model.host translation
+                {model | updateAttempt = Nothing},  Cmd.none
             )
 --        UpdateTranslationType param ->
 --             (

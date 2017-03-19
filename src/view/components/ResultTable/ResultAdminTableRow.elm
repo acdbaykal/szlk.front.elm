@@ -16,16 +16,18 @@ onInputBlur: Translation -> (String -> msg) -> Attribute msg
 onInputBlur translation tagger =
     on "blur" (Json.map tagger targetValue)
 
-onEnter: Translation -> (String -> msg) -> Attribute msg
-onEnter translation tagger =
+onKeyDown: Translation -> msg -> (String -> msg) -> Attribute msg
+onKeyDown translation onEscMsg tagger =
     let
-            valueOnEnter code =
-                if (code /= 13)
-                then Json.fail "was nor enter"
-                else (Json.map tagger targetValue)
+            keyDownDecoder code =
+                if code == 13
+                then (Json.map tagger targetValue)
+                else
+                    if code == 27
+                    then Json.succeed onEscMsg
+                    else Json.fail "pressed key not relevant"
     in
-    on "keydown" (Json.andThen valueOnEnter keyCode)
-
+    on "keydown" (Json.andThen keyDownDecoder keyCode)
 
 createAttr: Bool -> List (Attribute msg) -> List (Attribute msg)
 createAttr hasId props = if hasId then props else []
@@ -35,13 +37,14 @@ render:  (Maybe Date -> String) ->
             (Translation -> msg) -> -- delete translation request
             (Translation -> msg) -> -- update origin text attempt
             (Translation -> msg) -> -- update translation text attempt
-            (Translation -> msg) -> -- update translation request
+            (Translation -> msg) -> -- cancel translation edit
             (Translation -> String -> msg) -> -- update origin text
             (Translation -> String -> msg) -> -- update translation text
             (Translation -> Html msg) ->
             (TranslationType -> String) ->
             Translation ->
             Maybe TranslationProperty ->
+            Bool ->
             Html msg
 
 render  formatDate
@@ -49,20 +52,20 @@ render  formatDate
         deleteTranslationRequest
         updateOriginTextAttempt
         updateTranslationTextAttempt
-        updateTranslationRequest
+        cancelTranslationEdit
         updateOriginTextMsg
         updateTranslationTextMsg
         renderTypeSelectBox
         translationTypeToString
         translation
         editedProperty
+        editable
           =
             let
-                hasId_ = hasId translation
                 typeSelectBoxCell =
-                    if hasId_ then renderTypeSelectBox translation
+                    if editable then renderTypeSelectBox translation
                     else (td[][text (translationTypeToString translation.translationType)])
-                createAttr_  = createAttr hasId_
+                createAttr_  = createAttr editable
 
                 originTextCellAttr = createAttr_ [onClick (updateOriginTextAttempt translation)]
                 defaultOriginTextCell = td originTextCellAttr[text translation.originText]
@@ -71,15 +74,15 @@ render  formatDate
                 creationDateCell = td[][text (formatDate translation.creationDate)]
                 editDateCell = td[][text (formatDate translation.editDate)]
                 deleteButtonCell =
-                    if hasId_
+                    if editable
                     then td[][button [onClick (deleteTranslationRequest translation)][text "-"]]
                     else td[][]
 
                 onInputBlur_ = onInputBlur translation
-                onEnter_ = onEnter translation
+                onKeyDown_ = onKeyDown translation
                 updateOriginTextMsg_ = updateOriginTextMsg translation
                 updateTranslationTextMsg_ = updateTranslationTextMsg translation
-                updateTranslationRequest_ = updateTranslationRequest translation
+                cancelTranslationEdit_ = cancelTranslationEdit translation
                 defaultTableRow =
                     [
                        defaultOriginTextCell
@@ -102,7 +105,7 @@ render  formatDate
                                            input[
                                                 id focusId
                                            ,    onInputBlur_ updateOriginTextMsg_
-                                           ,    onEnter_ updateOriginTextMsg_
+                                           ,    onKeyDown_ cancelTranslationEdit_ updateOriginTextMsg_
                                            ,    value translation.originText
                                            ][]
                                         ]
@@ -120,7 +123,7 @@ render  formatDate
                                             input[
                                                 id focusId
                                             ,   onInputBlur_ updateTranslationTextMsg_
-                                            ,   onEnter_ updateTranslationTextMsg_
+                                            ,   onKeyDown_ cancelTranslationEdit_ updateTranslationTextMsg_
                                             ,   value translation.translationText
                                             ][]
                                           ]

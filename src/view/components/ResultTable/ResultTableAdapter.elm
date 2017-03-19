@@ -20,6 +20,11 @@ import ResultTableRow
 import ResultAdminTableRow
 import TranslationTypeSelectionBox
 
+type alias TranslationPlus = {
+            translation: Translation
+        ,   editable: Bool
+    }
+
 formatDate: Maybe Date -> String
 formatDate date =
     case date of
@@ -38,25 +43,25 @@ sortByDate a b =
                     Just dateB -> GT
                     Nothing -> EQ
 
-sortByCreationDate: Translation -> Translation -> Order
-sortByCreationDate a b = sortByDate a.creationDate b.creationDate
+sortByCreationDate: TranslationPlus -> TranslationPlus -> Order
+sortByCreationDate a b = sortByDate a.translation.creationDate b.translation.creationDate
 
-sortByEditDate: Translation -> Translation -> Order
-sortByEditDate a b = sortByDate a.editDate b.editDate
+sortByEditDate: TranslationPlus -> TranslationPlus -> Order
+sortByEditDate a b = sortByDate a.translation.editDate b.translation.editDate
 
-sortByType: Translation -> Translation -> Order
-sortByType a b = compare (labelType a) (labelType b)
+sortByType: TranslationPlus -> TranslationPlus -> Order
+sortByType a b = compare (labelType a.translation) (labelType b.translation)
 
-getSortingFunction: TranslationProperty -> (List Translation -> List Translation)
+getSortingFunction: TranslationProperty -> (List TranslationPlus -> List TranslationPlus)
 getSortingFunction sortBy =
      case sortBy of
-        OriginText -> List.sortBy .originText
-        TranslationText -> List.sortBy .translationText
+        OriginText -> List.sortBy (\tplus -> tplus.translation.originText)
+        TranslationText -> List.sortBy (\tplus -> tplus.translation.translationText)
         Type -> List.sortWith sortByType
         CreationDate -> List.sortWith sortByCreationDate
         EditDate -> List.sortWith sortByEditDate
 
-sortTranslations: List Translation -> SzlkModel -> List Translation
+sortTranslations: List TranslationPlus -> SzlkModel -> List TranslationPlus
 sortTranslations translations model =
     let
         sortFunction = getSortingFunction model.sortBy
@@ -75,27 +80,29 @@ containsTerm term translation =
     in
         contains_ translation.originText || contains_ translation.translationText
 
-filerTranslations : String -> List Translation -> List Translation
-filerTranslations term list =
+filterMapTranslations : String -> (Translation -> t) -> List Translation -> List t
+filterMapTranslations term transform list =
     let
-        filterFunc = \t ->
+        filterMapFunc = \t ->
                 let
                     contains = containsTerm term t
                 in
                     case contains of
-                        True -> Just t
+                        True -> Just (transform t)
                         False -> Nothing
     in
-        List.filterMap filterFunc list
+        List.filterMap filterMapFunc list
 
-adaptModel: SzlkModel -> List Translation
+adaptModel: SzlkModel -> List TranslationPlus
 adaptModel model =
     let
+        enhanceTranslation e t = {translation = t, editable = e}
+        addRequested = List.map (enhanceTranslation False) model.addRequestedTranslations
         asList = TranslationSet.toList model.translations
-        filtered = filerTranslations model.searchInputValue asList
-        concatenated = List.concat [model.addRequestedTranslations, filtered]
+        filtered = filterMapTranslations model.searchInputValue (enhanceTranslation True) asList
+        sorted = sortTranslations filtered model
     in
-        sortTranslations concatenated model
+        List.concat [addRequested, sorted]
 
 
 typeBoxContent = [ --TODO: eventually move this to the model, when ready to implement i18n features
@@ -149,8 +156,12 @@ defaultHeaderRow = ResultTableHeaderRow.render headerData
 adminHeaderRow: Html SzlkMsg
 adminHeaderRow = ResultTableHeaderRow.render adminHeaderData
 
-renderRow: Translation -> Html SzlkMsg
-renderRow = ResultTableRow.configure labelType
+renderRow: TranslationPlus -> Html SzlkMsg
+renderRow tplus=
+    let
+        render = ResultTableRow.configure labelType
+    in
+        render tplus.translation
 
 updateTranslationPropertyAttempt: TranslationProperty -> Translation -> SzlkMsg
 updateTranslationPropertyAttempt property =
@@ -211,23 +222,26 @@ createUpdateTranslationTextMsg translation translationText =
         }
 
 renderAdminRow: String -> ResultAdminTableRow.RenderTypeSelectBoxFunction SzlkMsg -> (TranslationType -> String) ->
-                (Translation -> Maybe TranslationProperty) -> Translation -> Html SzlkMsg
-renderAdminRow focusId renderFunc translationTypeToString getEditedProp translation =
+                (Translation -> Maybe TranslationProperty) -> TranslationPlus -> Html SzlkMsg
+renderAdminRow focusId renderFunc translationTypeToString getEditedProp translationPlus =
         ResultAdminTableRow.render
                     formatDate
                     focusId
                     SzlkMsg.DeleteRequest
                     updateOriginTextAttempt
                     updateTranslationTextAttempt
-                    SzlkMsg.UpdateRequest
+                    SzlkMsg.UpdateCancel
                     createUpdateOriginTextMsg
                     createUpdateTranslationTextMsg
                     renderFunc
                     translationTypeToString
-                    translation
-                    (getEditedProp translation)
+                    translationPlus.translation
+                    (getEditedProp translationPlus.translation)
+                    translationPlus.editable
 
-renderDefaultTable = ResultTable.render defaultHeaderRow renderRow
+renderDefaultTable =
+   ResultTable.render defaultHeaderRow renderRow
+
 renderAdminTable: SzlkModel ->
                   ResultAdminTableRow.RenderTypeSelectBoxFunction SzlkMsg->
                   Html SzlkMsg

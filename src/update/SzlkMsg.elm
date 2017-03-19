@@ -29,7 +29,7 @@ type SzlkMsg = UrlUpdate Navigation.Location| KeyDown Keyboard.KeyCode
         |AddRequestTranslationText String
         |AddRequestTranslationType (Maybe TranslationType)
     |DeleteRequest Translation
-    |UpdateRequest Translation
+    |UpdateCancel Translation
     -- Msgs to Answer an HTTP Request
     |SearchSuccess (List Translation)| SearchFail Http.Error
     |AddSuccess Translation Translation | AddFail Translation Http.Error
