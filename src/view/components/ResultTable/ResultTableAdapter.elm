@@ -8,6 +8,7 @@ import Maybe exposing (Maybe)
 import SzlkMsg exposing (SzlkMsg(..))
 import SzlkModel exposing (SzlkModel)
 import Translation exposing (Translation)
+import TranslationSet
 import TranslationProperty exposing (TranslationProperty(..))
 import TranslationType exposing (TranslationType(..))
 import UpdateTranslationParameter exposing (UpdateTranslationParameter, UpdateTranslationAttemptParameter)
@@ -54,7 +55,6 @@ getSortingFunction sortBy =
         Type -> List.sortWith sortByType
         CreationDate -> List.sortWith sortByCreationDate
         EditDate -> List.sortWith sortByEditDate
-        --_ -> \a -> a
 
 sortTranslations: List Translation -> SzlkModel -> List Translation
 sortTranslations translations model =
@@ -67,31 +67,62 @@ sortTranslations translations model =
             SortDirection.Ascending -> sortedList
             SortDirection.Descending -> List.reverse sortedList
 
+
+containsTerm : String -> Translation -> Bool
+containsTerm term translation =
+    let
+        contains_ = String.contains term
+    in
+        contains_ translation.originText || contains_ translation.translationText
+
+filerTranslations : String -> List Translation -> List Translation
+filerTranslations term list =
+    let
+        filterFunc = \t ->
+                let
+                    contains = containsTerm term t
+                in
+                    case contains of
+                        True -> Just t
+                        False -> Nothing
+    in
+        List.filterMap filterFunc list
+
 adaptModel: SzlkModel -> List Translation
-adaptModel model = sortTranslations model.translations model
+adaptModel model =
+    let
+        asList = TranslationSet.toList model.translations
+        filtered = filerTranslations model.searchInputValue asList
+        concatenated = List.concat [model.addRequestedTranslations, filtered]
+    in
+        sortTranslations concatenated model
 
 
 typeBoxContent = [ --TODO: eventually move this to the model, when ready to implement i18n features
                 (NOUN_MASK, "Noun (mask.)")
                ,(NOUN_FEM, "Noun (fem.)")
                ,(NOUN_NEUT, "Noun (neut.)")
-               ,(SAYING, "Saying")
+               ,(PREFIX, "Saying")
                ,(DIRECTIVE, "Directive")
                ,(VERB, "Verb")
+               ,(PLURAL, "Plural")
+               ,(ADJECTIVE, "Adjective")
     ]
 
+translationTypeToString: TranslationType -> String
+translationTypeToString ttype =
+    case ttype of
+        NOUN_MASK -> "Noun (mask.)"
+        NOUN_FEM -> "Noun (fem.)"
+        NOUN_NEUT -> "Noun (neut.)"
+        PREFIX -> "Prefix"
+        DIRECTIVE -> "Directive"
+        VERB -> "Verb"
+        PLURAL -> "Plural"
+        ADJECTIVE -> "Adjective"
+
 labelType: Translation -> String
-labelType translation =
-    let
-        ttype = translation.translationType
-    in
-        case ttype of
-            NOUN_MASK -> "Noun (mask.)"
-            NOUN_FEM -> "Noun (fem.)"
-            NOUN_NEUT -> "Noun (neut.)"
-            SAYING -> "Saying"
-            DIRECTIVE -> "Directive"
-            VERB -> "Verb"
+labelType translation = translationTypeToString translation.translationType
 
 headerData =
     [
@@ -162,16 +193,16 @@ extractEditedProperty model translation =
                 in
                     if editedTranslation == translation then Just editedProperty else Nothing
 
-createUpdateOriginText: Translation -> (String -> SzlkMsg)
-createUpdateOriginText translation newOriginText =
+createUpdateOriginTextMsg: Translation -> String -> SzlkMsg
+createUpdateOriginTextMsg translation newOriginText =
     UpdateTranslationOriginText {
                                     translation = translation,
                                     property = OriginText,
                                     value = newOriginText
                                 }
 
-createUpdateTranslationText: Translation -> (String -> SzlkMsg)
-createUpdateTranslationText translation translationText =
+createUpdateTranslationTextMsg: Translation -> String -> SzlkMsg
+createUpdateTranslationTextMsg translation translationText =
     UpdateTranslationTranslationText
         {
             translation = translation
@@ -179,18 +210,20 @@ createUpdateTranslationText translation translationText =
         ,   value = translationText
         }
 
-renderAdminRow: String -> ResultAdminTableRow.RenderTypeSelectBoxFunction SzlkMsg ->
+renderAdminRow: String -> ResultAdminTableRow.RenderTypeSelectBoxFunction SzlkMsg -> (TranslationType -> String) ->
                 (Translation -> Maybe TranslationProperty) -> Translation -> Html SzlkMsg
-renderAdminRow focusId renderFunc getEditedProp translation =
+renderAdminRow focusId renderFunc translationTypeToString getEditedProp translation =
         ResultAdminTableRow.render
                     formatDate
                     focusId
                     SzlkMsg.DeleteRequest
                     updateOriginTextAttempt
                     updateTranslationTextAttempt
-                    (createUpdateOriginText translation)
-                    (createUpdateTranslationText translation)
+                    SzlkMsg.UpdateRequest
+                    createUpdateOriginTextMsg
+                    createUpdateTranslationTextMsg
                     renderFunc
+                    translationTypeToString
                     translation
                     (getEditedProp translation)
 
@@ -201,7 +234,7 @@ renderAdminTable: SzlkModel ->
 renderAdminTable model renderTypeSelectBox =
         ResultTable.render
             adminHeaderRow
-            (renderAdminRow model.focusId renderTypeSelectBox (extractEditedProperty model))
+            (renderAdminRow model.focusId renderTypeSelectBox translationTypeToString (extractEditedProperty model))
             (adaptModel model)
 
 

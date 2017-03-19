@@ -1,7 +1,7 @@
 module TranslationType exposing (TranslationType(..), toTranslationType)
 
 type TranslationType = NOUN_MASK | NOUN_FEM | NOUN_NEUT
-    | VERB | DIRECTIVE | SAYING
+    | VERB | PLURAL | ADJECTIVE | PREFIX | DIRECTIVE
 
 
 toTranslationType: String -> Maybe TranslationType
@@ -12,5 +12,7 @@ toTranslationType str =
         "NOUN_NEUT" -> Just NOUN_NEUT
         "VERB" -> Just VERB
         "DIRECTIVE" -> Just DIRECTIVE
-        "SAYING" -> Just SAYING
+        "PLURAL" -> Just PLURAL
+        "ADJECTIVE" -> Just ADJECTIVE
+        "PREFIX" -> Just PREFIX
         _ -> Nothing

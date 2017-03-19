@@ -11,6 +11,7 @@
         "src/view",
         "src/view/components",
         "src/view/components/AddTranslationArea",
+        "src/view/components/LoginForm",
         "src/view/components/ResultTable",
         "src/view/components/SearchArea",
         "src/view/components/TranslationTypeSelectionBox"
@@ -23,8 +24,14 @@
         "elm-lang/core": "5.0.0 <= v < 6.0.0",
         "elm-lang/dom": "1.1.0 <= v < 2.0.0",
         "elm-lang/html": "2.0.0 <= v < 3.0.0",
+        "elm-lang/http": "1.0.0 <= v < 2.0.0",
+        "elm-lang/keyboard": "1.0.1 <= v < 2.0.0",
+        "elm-lang/navigation": "2.1.0 <= v < 3.0.0",
         "jinjor/elm-time-travel": "2.0.0 <= v < 3.0.0",
-        "mgold/elm-date-format": "1.1.6 <= v < 2.0.0"
+        "justinmimbs/elm-date-extra": "2.0.3 <= v < 3.0.0",
+        "mgold/elm-date-format": "1.1.6 <= v < 2.0.0",
+        "rluiten/elm-date-extra": "8.3.0 <= v < 9.0.0",
+        "spisemisu/elm-sha": "1.0.5 <= v < 2.0.0"
     },
     "elm-version": "0.18.0 <= v < 0.19.0"
 }

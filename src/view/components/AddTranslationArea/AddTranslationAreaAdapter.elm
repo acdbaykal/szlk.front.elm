@@ -13,9 +13,11 @@ dropBoxContent =
          (NOUN_MASK, "Noun (mask.)")
         ,(NOUN_FEM, "Noun (fem.)")
         ,(NOUN_NEUT, "Noun (neut.)")
-        ,(SAYING, "Saying")
-        ,(DIRECTIVE, "Directive")
+        ,(ADJECTIVE, "Adjective")
         ,(VERB, "Verb")
+        ,(PLURAL, "PLURAL")
+        ,(PREFIX, "Prefix")
+        ,(DIRECTIVE, "Directive")
     ]
 
 onChangeMsg : TranslationTypeSelectionBox.OnChangeMsg SzlkMsg
